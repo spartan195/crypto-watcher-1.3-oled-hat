@@ -10,6 +10,7 @@ import pytz
 import math
 import requests
 
+
 def fetch_ohlc(symbol: str) -> List[Tuple[float, ...]]:
     res = requests.get(
         "https://api.binance.com/api/v3/klines", params={"symbol": symbol.upper(), "interval": "1h", "limit": 25})
@@ -23,6 +24,7 @@ def fetch_ohlc(symbol: str) -> List[Tuple[float, ...]]:
 
     return ohlc
 
+
 def fetch_crypto_data(symbol: str) -> Tuple[float, float, List[Tuple[float, ...]]]:
     ohlc_data = fetch_ohlc(symbol)
     price_current = ohlc_data[-1][-1]
@@ -31,10 +33,12 @@ def fetch_crypto_data(symbol: str) -> Tuple[float, float, List[Tuple[float, ...]
 
     return price_current, price_diff, ohlc_data
 
+
 def price_to_str(price: float) -> str:
     exp10 = math.floor(math.log10(abs(price)))
     num_decimals = int(min(5, max(0, 3 - exp10)))
     return "%.*f" % (num_decimals, price)
+
 
 def main():
     disp = SH1106.SH1106()
@@ -46,38 +50,36 @@ def main():
     font = ImageFont.truetype("OpenSans-Regular.ttf", 20)
     font_small = ImageFont.truetype("OpenSans-Regular.ttf", 16)
     font_tiny = ImageFont.truetype("OpenSans-Regular.ttf", 12)
+    font_super_tiny = ImageFont.truetype("OpenSans-Regular.ttf", 10)
 
-    timezone = pytz.timezone("Europe/Madrid")
     while True:
-        price, diff, ohlc = fetch_crypto_data("dogeusdt")  # TODO: use any binance symbol you want (Ex.: DOGE = dogeusdt)
+        price, diff, ohlc = fetch_crypto_data(
+            "dogeusdt")  # TODO: use any binance symbol you want (Ex.: DOGE = dogeusdt)
 
-        #Clear Screen
+        # Clear Screen
         image1 = Image.new('1', (disp.width, disp.height), "WHITE")
         draw = ImageDraw.Draw(image1)
 
-        #Title
-        draw.text((30, 0), 'DogeCoin ', font=font_tiny, fill=0)
+        # Title
+        draw.rectangle((0, 0, 127, 17), outline=255, fill=0)  # Background rectangle
+        draw.text((35, 0), 'DOGECOIN ', font=font_tiny, fill=1)
 
-        #Actual Price
-        draw.text((28, 20), text="{}$".format(
+        # Actual Price
+        draw.text((30, 20), text="{} $".format(
             price_to_str(price)), font=font, fill=0)
 
-        #Set price diff symbol
+        # Set price diff symbol
         diff_symbol = ""
         if diff > 0:
             diff_symbol = "+"
         if diff < 0:
             diff_symbol = "-"
 
-        #Draw diff price
-        draw.text((30, 40), text="{}{}$".format(diff_symbol,price_to_str(diff)), font=font_small, fill=0)
-
-        draw.text((6, 50), text=datetime.datetime.now(timezone).strftime("%Y-%m-%d %H:%M:%S"),
-                  font=font_tiny, fill=0)
+        # Draw diff price
+        draw.text((35, 40), text="{}{}$".format(diff_symbol, price_to_str(diff)), font=font_small, fill=0)
 
         disp.ShowImage(disp.getbuffer(image1))
         time.sleep(5)
-
 
 if __name__ == "__main__":
     main()
